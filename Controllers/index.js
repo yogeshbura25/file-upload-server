@@ -1,46 +1,49 @@
 import multer from "multer";
 import { PrismaClient } from "@prisma/client";
+import Joi from "joi";
 const prisma = new PrismaClient();
 
 import path from "path";
 
 import fs from "fs";
 
+
+const fileSchema = Joi.object({
+  mimetype: Joi.string()
+    .valid(
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+       "application/pdf",
+      "image/svg+xml",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    .required()
+    .messages({
+      "any.only":
+        "Invalid file format. Only JPEG, PNG, PDF, SVG, and DOCX files are allowed.",
+    }),
+  size: Joi.number()
+    .max(5 * 1024 * 1024)
+    .required()
+    .messages({
+      "number.max": "File size exceeds the limit of 5MB.",
+    }),
+});
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "FileContainer/");
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const extension = path.extname(file.originalname).toLowerCase();
-    cb(null, file.fieldname + "-" + uniqueSuffix + extension);
-    // const originalFileName = file.originalname.toLowerCase(); // Use the original file name
-    // cb(null, originalFileName);
+    cb(null, `${file.fieldname}-${uniqueSuffix}${extension}`);
   },
 });
 
 const uploadFile = multer({
   storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
-  fileFilter(req, file, cb) {
-    const allowedFileTypes = /jpeg|jpg|png|pdf|svg|docx/;
-    const fileExtension = allowedFileTypes.test(
-      file.originalname.toLowerCase()
-    );
-    const mimetype = allowedFileTypes.test(file.mimetype);
-
-    if (fileExtension && mimetype) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error(
-          "Invalid File Type. Only JPEG, PNG, PDF, SVG, and DOCX files are allowed."
-        )
-      );
-    }
-  },
 });
 
 export const singlefile = uploadFile.single("file");
@@ -61,8 +64,18 @@ export const uploadfileserver = async (req, res) => {
       return res.status(404).send({ error: "User not found" });
     }
 
-    const filePath = req.file.path;
+    const { error } = fileSchema.validate({
+      mimetype: req.file.mimetype,
+      size: req.file.size || 0, 
+    });
 
+    if (error) {
+      return res.status(400).send({ error: error.details[0].message });
+    }
+
+
+    const filePath = req.file.path;
+    const fileSizeInMB = (req.file.size / (1024 * 1024)).toFixed(2);
     const fileUpload = await prisma.userFile.create({
       data: {
         fileName: req.file.originalname,
@@ -73,6 +86,7 @@ export const uploadfileserver = async (req, res) => {
 
     res.status(201).send({
       message: "File uploaded successfully",
+      fileSizeInMB: fileSizeInMB,
       user,
       fileUpload,
     });
