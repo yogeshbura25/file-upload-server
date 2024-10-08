@@ -11,10 +11,5 @@ router.delete("/delete-file/:email/:id", deletefile);
 
 
 
-// router.get('/', (req, res) => {
-//     const name = "Yogesh";
-//     res.status(200).send(`User ${name} created successfully!`);
-// });
-
 
 export default router;

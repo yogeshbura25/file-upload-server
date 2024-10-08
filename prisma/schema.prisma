@@ -23,8 +23,8 @@ model user {
 
 model userFile {
   id        Int      @id @default(autoincrement())
-  fileName  String   // Store the original file name
-  filePath  String   // Store the file path as a string
+  fileName  String  
+  filePath  String   
   userId    Int
   user      user     @relation(fields: [userId], references: [id])
 }
