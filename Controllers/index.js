@@ -1,104 +1,57 @@
-import multer from "multer";
+// import multer from "multer";
 import { PrismaClient } from "@prisma/client";
-import Joi from "joi";
+// import Joi from "joi";
 const prisma = new PrismaClient();
 
-import path from "path";
+// import path from "path";
 
-import fs from "fs";
-
-
-const fileSchema = Joi.object({
-  mimetype: Joi.string()
-    .valid(
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-       "application/pdf",
-      "image/svg+xml",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
-    .required()
-    .messages({
-      "any.only":
-        "Invalid file format. Only JPEG, PNG, PDF, SVG, and DOCX files are allowed.",
-    }),
-  size: Joi.number()
-    .max(5 * 1024 * 1024)
-    .required()
-    .messages({
-      "number.max": "File size exceeds the limit of 5MB.",
-    }),
-});
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "FileContainer/");
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const extension = path.extname(file.originalname).toLowerCase();
-    cb(null, `${file.fieldname}-${uniqueSuffix}${extension}`);
-  },
-});
-
-const uploadFile = multer({
-  storage: storage,
-});
-
-export const singlefile = uploadFile.single("file");
-
-export const uploadfileserver = async (req, res) => {
-  const { email } = req.params;
-
-  try {
-    if (!req.file) {
-      return res.status(400).send({ error: "No file uploaded" });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      return res.status(404).send({ error: "User not found" });
-    }
-
-    const { error } = fileSchema.validate({
-      mimetype: req.file.mimetype,
-      size: req.file.size || 0, 
-    });
-
-    if (error) {
-      return res.status(400).send({ error: error.details[0].message });
-    }
+// import fs from "fs";
 
 
-    const filePath = req.file.path;
-    const fileSizeInMB = (req.file.size / (1024 * 1024)).toFixed(2);
-    const fileUpload = await prisma.userFile.create({
-      data: {
-        fileName: req.file.originalname,
-        filePath: filePath,
-        userId: user.id,
-      },
-    });
+// const fileSchema = Joi.object({
+//   mimetype: Joi.string()
+//     .valid(
+//       "image/jpeg",
+//       "image/jpg",
+//       "image/png",
+//        "application/pdf",
+//       "image/svg+xml",
+//       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+//     )
+//     .required()
+//     .messages({
+//       "any.only":
+//         "Invalid file format. Only JPEG, PNG, PDF, SVG, and DOCX files are allowed.",
+//     }),
+//   size: Joi.number()
+//     .max(5 * 1024 * 1024)
+//     .required()
+//     .messages({
+//       "number.max": "File size exceeds the limit of 5MB.",
+//     }),
+// });
 
-    res.status(201).send({
-      message: "File uploaded successfully",
-      fileSizeInMB: fileSizeInMB,
-      user,
-      fileUpload,
-    });
-  } catch (error) {
-    res.status(500).send({ error: error.message });
-  }
-};
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "FileContainer/");
+//   },
+//   filename: function (req, file, cb) {
+//     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+//     const extension = path.extname(file.originalname).toLowerCase();
+//     cb(null, `${file.fieldname}-${uniqueSuffix}${extension}`);
+//   },
+// });
+
+// const uploadFile = multer({
+//   storage: storage,
+// });
+
+// export const singlefile = uploadFile.single("file");
 
 export const createuser = async (req, res) => {
   const { email, name } = req.body;
 
-  try {
+
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -115,76 +68,119 @@ export const createuser = async (req, res) => {
       data: newUser,
       message: "User created successfully",
     });
-  } catch (error) {
-    res.status(500).send({ error: error.message });
-  }
+ 
 };
 
-export const getfile = async (req, res) => {
-  const { email } = req.params;
+// export const uploadfileserver = async (req, res) => {
+//   const { email } = req.params;
 
-  if (!email) {
-    return res.status(400).send({ error: "Email is required" });
-  }
 
-  try {
-    const userRecord = await prisma.user.findUnique({
-      where: { email },
-      include: { userfile: true },
-    });
+//     if (!req.file) {
+//       return res.status(400).send({ error: "No file uploaded" });
+//     }
 
-    if (!userRecord) {
-      return res.status(404).send({ error: "User not found" });
-    }
-    //   const fileSizeInMB = (req.file.size / (1024 * 1024)).toFixed(2);
+//     const user = await prisma.user.findUnique({
+//       where: { email },
+//     });
 
-    res.status(200).send({
-      user: userRecord,
-      // files: userRecord.files,
-    });
-  } catch (error) {
-    res.status(500).send({ error: error.message });
-  }
-};
+//     if (!user) {
+//       return res.status(404).send({ error: "User not found" });
+//     }
 
-export const deletefile = async (req, res) => {
-  const { email, id } = req.params;
+//     const { error } = fileSchema.validate({
+//       mimetype: req.file.mimetype,
+//       size: req.file.size || 0, 
+//     });
 
-  try {
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        userfile: true,
-      },
-    });
+//     if (error) {
+//       return res.status(400).send({ error: error.details[0].message });
+//     }
 
-    if (!user) {
-      return res.status(404).send({ error: "User not found" });
-    }
 
-    const fileToDelete = user.userfile.find((file) => file.id === parseInt(id));
+//     const filePath = req.file.path;
+//     const fileSizeInMB = (req.file.size / (1024 * 1024)).toFixed(2);
+//     const fileUpload = await prisma.userFile.create({
+//       data: {
+//         fileName: req.file.originalname,
+//         filePath: filePath,
+//         userId: user.id,
+//       },
+//     });
 
-    if (!fileToDelete) {
-      return res.status(404).send({ error: "File not found for the user" });
-    }
+//     res.status(201).send({
+//       message: "File uploaded successfully",
+//       fileSizeInMB: fileSizeInMB,
+//       user,
+//       fileUpload,
+//     });
+  
+// };
 
-    const filePath = fileToDelete.filePath;
+// export const getfile = async (req, res) => {
+//   const { email } = req.params;
 
-    const fullPath = path.resolve(filePath);
-    fs.unlink(fullPath, async (err) => {
-      if (err) {
-        return res.status(500).send({ error: "Error deleting the file" });
-      }
+//   if (!email) {
+//     return res.status(400).send({ error: "Email is required" });
+//   }
 
-      await prisma.userFile.delete({
-        where: { id: fileToDelete.id },
-      });
+//   try {
+//     const userRecord = await prisma.user.findUnique({
+//       where: { email },
+//       include: { userfile: true },
+//     });
 
-      res.status(200).send({
-        message: "File deleted successfully",
-      });
-    });
-  } catch (error) {
-    res.status(500).send({ error: error.message });
-  }
-};
+//     if (!userRecord) {
+//       return res.status(404).send({ error: "User not found" });
+//     }
+//     //   const fileSizeInMB = (req.file.size / (1024 * 1024)).toFixed(2);
+
+//     res.status(200).send({
+//       user: userRecord,
+//       // files: userRecord.files,
+//     });
+//   } catch (error) {
+//     res.status(500).send({ error: error.message });
+//   }
+// };
+
+// export const deletefile = async (req, res) => {
+//   const { email, id } = req.params;
+
+//   try {
+//     const user = await prisma.user.findUnique({
+//       where: { email },
+//       include: {
+//         userfile: true,
+//       },
+//     });
+
+//     if (!user) {
+//       return res.status(404).send({ error: "User not found" });
+//     }
+
+//     const fileToDelete = user.userfile.find((file) => file.id === parseInt(id));
+
+//     if (!fileToDelete) {
+//       return res.status(404).send({ error: "File not found for the user" });
+//     }
+
+//     const filePath = fileToDelete.filePath;
+
+//     const fullPath = path.resolve(filePath);
+//     fs.unlink(fullPath, async (err) => {
+//       if (err) {
+//         return res.status(500).send({ error: "Error deleting the file" });
+//       }
+
+//       await prisma.userFile.delete({
+//         where: { id: fileToDelete.id },
+//       });
+
+//       res.status(200).send({
+//         message: "File deleted successfully",
+//       });
+//     });
+//   } catch (error) {
+//     res.status(500).send({ error: error.message });
+//   }
+// };

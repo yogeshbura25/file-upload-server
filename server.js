@@ -19,14 +19,15 @@ app.use((err, req, res, next) => {
 
 
 
-import {createuser, uploadfileserver , singlefile, getfile, deletefile} from  "./Controllers/index.js"
+// import {createuser, uploadfileserver , singlefile, getfile, deletefile} from  "./Controllers/index.js"
 
 
 
+import {createuser} from  "./Controllers/index.js"
 app.post("/create-user", createuser );
-app.post("/upload-file/:email", singlefile, uploadfileserver );
-app.get("/get-file/:email", getfile );
-app.delete("/delete-file/:email/:id", deletefile);
+// app.post("/upload-file/:email", singlefile, uploadfileserver );
+// app.get("/get-file/:email", getfile );
+// app.delete("/delete-file/:email/:id", deletefile);
 
 
 
