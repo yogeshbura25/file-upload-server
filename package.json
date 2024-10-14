@@ -1,11 +1,11 @@
 {
   "name": "fileuploadserver",
   "version": "1.0.0",
-  "main": "app/index.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node app/index.js",
-    "server": "nodemon app/index.js",
+    "start": "node server.js",
+    "server": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
